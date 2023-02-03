@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -66,6 +66,7 @@ public class ZigBeeBaseChannelConverterTest {
         ZigBeeBaseChannelConverter converter = new ZigBeeConverterSwitchLevel();
 
         ZigBeeEndpoint endpoint = Mockito.mock(ZigBeeEndpoint.class);
+        Mockito.when(endpoint.getProfileId()).thenReturn(0x104);
         Mockito.when(endpoint.getDeviceId()).thenReturn(1);
         assertEquals("LEVEL_CONTROL_SWITCH", converter.getDeviceTypeLabel(endpoint));
 

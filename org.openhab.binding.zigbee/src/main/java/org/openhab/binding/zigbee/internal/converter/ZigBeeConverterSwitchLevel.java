@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -40,6 +40,7 @@ import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.types.Command;
+import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -381,7 +382,12 @@ public class ZigBeeConverterSwitchLevel extends ZigBeeBaseChannelConverter
 
         // Some functionality (eg IncreaseDecrease) requires that we know the last command received
         lastCommand = localCommand;
-        monitorCommandResponse(localCommand, responseFuture);
+        monitorCommandResponse(localCommand, responseFuture, cmd -> {
+            updateChannelState((State) cmd);
+            if (cmd instanceof PercentType) {
+                lastLevel = ((PercentType) cmd);
+            }
+        });
     }
 
     /**
@@ -516,7 +522,7 @@ public class ZigBeeConverterSwitchLevel extends ZigBeeBaseChannelConverter
     @Override
     public synchronized void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.LEVEL_CONTROL
+        if (attribute.getClusterType() == ZclClusterType.LEVEL_CONTROL
                 && attribute.getId() == ZclLevelControlCluster.ATTR_CURRENTLEVEL) {
             lastLevel = levelToPercent((Integer) val);
             if (configLevelControl != null) {
@@ -526,7 +532,8 @@ public class ZigBeeConverterSwitchLevel extends ZigBeeBaseChannelConverter
                 // Note that state is only updated if the current On/Off state is TRUE (ie ON)
                 updateChannelState(lastLevel);
             }
-        } else if (attribute.getCluster() == ZclClusterType.ON_OFF && attribute.getId() == ZclOnOffCluster.ATTR_ONOFF) {
+        } else if (attribute.getClusterType() == ZclClusterType.ON_OFF
+                && attribute.getId() == ZclOnOffCluster.ATTR_ONOFF) {
             if (attribute.getLastValue() != null) {
                 currentOnOffState.set((Boolean) val);
                 updateChannelState(currentOnOffState.get() ? lastLevel : OnOffType.OFF);

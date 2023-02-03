@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -419,44 +419,22 @@ public class ZigBeeConverterColorColor extends ZigBeeBaseChannelConverter implem
             return null;
         }
 
-        try {
-            if (!clusterColorControl.discoverAttributes(false).get()) {
-                // Device is not supporting attribute reporting - instead, just read the attributes
-                Integer capabilities = (Integer) clusterColorControl
-                        .getAttribute(ZclColorControlCluster.ATTR_COLORCAPABILITIES).readValue(Long.MAX_VALUE);
-                if (capabilities == null
-                        && clusterColorControl.getAttribute(ZclColorControlCluster.ATTR_CURRENTX)
-                                .readValue(Long.MAX_VALUE) == null
-                        && clusterColorControl.getAttribute(ZclColorControlCluster.ATTR_CURRENTHUE)
-                                .readValue(Long.MAX_VALUE) == null) {
-                    logger.trace("{}: Color control XY and Hue returned null", endpoint.getIeeeAddress());
-                    return null;
-                }
-                if (capabilities != null && ((capabilities & (ColorCapabilitiesEnum.HUE_AND_SATURATION.getKey()
-                        | ColorCapabilitiesEnum.XY_ATTRIBUTE.getKey())) == 0)) {
-                    // No support for hue or XY
-                    logger.trace("{}: Color control XY and Hue capabilities not supported", endpoint.getIeeeAddress());
-                    return null;
-                }
-            } else if (clusterColorControl.isAttributeSupported(ZclColorControlCluster.ATTR_COLORCAPABILITIES)) {
-                // If the device is reporting its capabilities, then use this over attribute detection
-                // The color control cluster is required to always support XY attributes, so a non-color bulb is still
-                // detected as a color bulb in this case.
-                Integer capabilities = (Integer) clusterColorControl
-                        .getAttribute(ZclColorControlCluster.ATTR_COLORCAPABILITIES).readValue(Long.MAX_VALUE);
-                if ((capabilities != null) && (capabilities & (ColorCapabilitiesEnum.HUE_AND_SATURATION.getKey()
-                        | ColorCapabilitiesEnum.XY_ATTRIBUTE.getKey())) == 0) {
-                    // No support for hue or XY
-                    logger.trace("{}: Color control XY and Hue capabilities not supported", endpoint.getIeeeAddress());
-                    return null;
-                }
-            } else if (!clusterColorControl.isAttributeSupported(ZclColorControlCluster.ATTR_CURRENTHUE)
-                    && !clusterColorControl.isAttributeSupported(ZclColorControlCluster.ATTR_CURRENTX)) {
-                logger.trace("{}: Color control XY and Hue attributes not supported", endpoint.getIeeeAddress());
-                return null;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            logger.warn("{}: Exception discovering attributes in color control cluster", endpoint.getIeeeAddress(), e);
+        // Device is not supporting attribute reporting - instead, just read the attributes
+        Integer capabilities = (Integer) clusterColorControl.getAttribute(ZclColorControlCluster.ATTR_COLORCAPABILITIES)
+                .readValue(Long.MAX_VALUE);
+        if (capabilities == null
+                && clusterColorControl.getAttribute(ZclColorControlCluster.ATTR_CURRENTX)
+                        .readValue(Long.MAX_VALUE) == null
+                && clusterColorControl.getAttribute(ZclColorControlCluster.ATTR_CURRENTHUE)
+                        .readValue(Long.MAX_VALUE) == null) {
+            logger.trace("{}: Color control XY and Hue returned null", endpoint.getIeeeAddress());
+            return null;
+        }
+        if (capabilities != null && ((capabilities & (ColorCapabilitiesEnum.HUE_AND_SATURATION.getKey()
+                | ColorCapabilitiesEnum.XY_ATTRIBUTE.getKey())) == 0)) {
+            // No support for hue or XY
+            logger.trace("{}: Color control XY and Hue capabilities not supported", endpoint.getIeeeAddress());
+            return null;
         }
 
         return ChannelBuilder
@@ -542,18 +520,18 @@ public class ZigBeeConverterColorColor extends ZigBeeBaseChannelConverter implem
 
         synchronized (colorUpdateSync) {
             try {
-                if (attribute.getCluster().getId() == ZclOnOffCluster.CLUSTER_ID) {
+                if (attribute.getClusterType().getId() == ZclOnOffCluster.CLUSTER_ID) {
                     if (attribute.getId() == ZclOnOffCluster.ATTR_ONOFF) {
                         Boolean value = (Boolean) val;
                         OnOffType onoff = value ? OnOffType.ON : OnOffType.OFF;
                         updateOnOff(onoff);
                     }
-                } else if (attribute.getCluster().getId() == ZclLevelControlCluster.CLUSTER_ID) {
+                } else if (attribute.getClusterType().getId() == ZclLevelControlCluster.CLUSTER_ID) {
                     if (attribute.getId() == ZclLevelControlCluster.ATTR_CURRENTLEVEL) {
                         PercentType brightness = levelToPercent((Integer) val);
                         updateBrightness(brightness);
                     }
-                } else if (attribute.getCluster().getId() == ZclColorControlCluster.CLUSTER_ID) {
+                } else if (attribute.getClusterType().getId() == ZclColorControlCluster.CLUSTER_ID) {
                     if (attribute.getId() == ZclColorControlCluster.ATTR_CURRENTHUE) {
                         int hue = (Integer) val;
                         if (hue != lastHue) {

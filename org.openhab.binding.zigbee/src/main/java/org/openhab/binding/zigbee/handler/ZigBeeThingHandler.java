@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -84,6 +84,7 @@ import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaFile;
 import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaServerStatus;
 import com.zsmartsystems.zigbee.app.otaserver.ZigBeeOtaStatusCallback;
 import com.zsmartsystems.zigbee.zcl.clusters.ZclOtaUpgradeCluster;
+import com.zsmartsystems.zigbee.zcl.clusters.otaupgrade.QueryNextImageCommand;
 import com.zsmartsystems.zigbee.zdo.field.NeighborTable;
 import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
 
@@ -94,7 +95,7 @@ import com.zsmartsystems.zigbee.zdo.field.RoutingTable;
  * @author Thomas Höfer - Injected ZigBeeChannelConverterFactory via constructor
  */
 public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetworkNodeListener, ZigBeeAnnounceListener,
-        FirmwareUpdateHandler, ConfigDescriptionProvider, DynamicStateDescriptionProvider {
+        FirmwareUpdateHandler, ConfigDescriptionProvider, DynamicStateDescriptionProvider, ZigBeeOtaStatusCallback {
     /**
      * Our logger
      */
@@ -145,8 +146,6 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
      */
     private final int POLLING_OR_REPORTING_MARGIN = 30;
 
-    private boolean firmwareUpdateInProgress = false;
-
     private ExecutorService commandScheduler = ThreadPoolManager.getPool("zigbee-thinghandler-commands");
 
     /**
@@ -160,12 +159,30 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
     private final ZigBeeIsAliveTracker isAliveTracker;
 
     /**
+     * The local OTA upgrade server used to update the device firmware
+     */
+    private ZclOtaUpgradeServer otaServer;
+
+    /**
+     * Firmware update progress callback - will be null unless an OTA is in progress
+     */
+    private ProgressCallback progressCallback;
+
+    /**
+     * Holds the version information from the last request the device made
+     */
+    private ZigBeeFirmwareVersion lastFirmwareVersion;
+
+    private boolean firmwareUpdateInProgress = false;
+
+    /**
      * Creates a ZigBee thing.
      *
      * @param zigbeeDevice the {@link Thing}
      * @param channelFactory the {@link ZigBeeChannelConverterFactory} to be used to create the channels
      * @param zigbeeIsAliveTracker the tracker which sets the {@link Thing} to OFFLINE after a period without
      *            communication
+     * @param firmwareUpdateService
      */
     public ZigBeeThingHandler(Thing zigbeeDevice, ZigBeeChannelConverterFactory channelFactory,
             ZigBeeIsAliveTracker zigbeeIsAliveTracker) {
@@ -429,7 +446,7 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
         }
 
         // If this is an RFD then we reduce polling to the max to avoid wasting battery
-        if (node.isReducedFuntionDevice()) {
+        if (node.isReducedFunctionDevice()) {
             pollingPeriod = POLLING_PERIOD_DEFAULT;
             logger.debug("{}: Thing is RFD, using long poll period of {}sec", nodeIeeeAddress, pollingPeriod);
         }
@@ -447,6 +464,12 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
             }
         } catch (InterruptedException | ExecutionException e) {
             logger.error("{}: Exception getting binding table ", nodeIeeeAddress, e);
+        }
+
+        // Listen for incoming OTA requests
+        ZclOtaUpgradeServer otaServer = getOtaServer(node);
+        if (otaServer != null) {
+            otaServer.addListener(this);
         }
 
         updateStatus(ThingStatus.ONLINE);
@@ -554,11 +577,17 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
 
         stopPolling();
 
-        if (nodeIeeeAddress != null) {
-            if (coordinatorHandler != null) {
-                coordinatorHandler.removeNetworkNodeListener(this);
-                coordinatorHandler.removeAnnounceListener(this);
+        if (coordinatorHandler != null) {
+            coordinatorHandler.removeNetworkNodeListener(this);
+            coordinatorHandler.removeAnnounceListener(this);
+
+            if (nodeIeeeAddress != null && coordinatorHandler.getNode(nodeIeeeAddress) != null) {
+                ZclOtaUpgradeServer otaServer = getOtaServer(coordinatorHandler.getNode(nodeIeeeAddress));
+                if (otaServer != null) {
+                    otaServer.removeListener(this);
+                }
             }
+
             nodeIeeeAddress = null;
         }
 
@@ -590,20 +619,20 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
             @Override
             public void run() {
                 try {
-                    logger.debug("{}: Polling {} channels...", nodeIeeeAddress, channels.keySet());
+                    logger.debug("{}: Polling {} channels", nodeIeeeAddress, channels.keySet().size());
 
                     for (ChannelUID channelUid : channels.keySet()) {
-                        if (isLinked(channelUid)) {
+                        if (!isLinked(channelUid)) {
                             // Don't poll if this channel isn't linked
+                            logger.debug("{}: Not polling {} - channel is not linked", nodeIeeeAddress, channelUid);
                             continue;
                         }
 
-                        logger.debug("{}: Polling {}", nodeIeeeAddress, channelUid);
                         ZigBeeBaseChannelConverter converter = channels.get(channelUid);
                         if (converter == null) {
-                            logger.debug("{}: Polling aborted as no converter found for {}", nodeIeeeAddress,
-                                    channelUid);
+                            logger.debug("{}: Not polling {} - no converter found", nodeIeeeAddress, channelUid);
                         } else {
+                            logger.debug("{}: Polling {}", nodeIeeeAddress, channelUid);
                             converter.handleRefresh();
                         }
                     }
@@ -932,6 +961,112 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
         return ConfigDescriptionBuilder.create(uri).withParameters(converter.getConfigDescription()).build();
     }
 
+    /**
+     * Gets the {@link ZclOtaUpgradeServer} for the node. If this is not configured in the library, it will be added on
+     * the first endpoint supporting OTA.
+     *
+     * @param node the {@link ZigBeeNode}
+     * @return the {@link ZclOtaUpgradeServer} for the node
+     */
+    @SuppressWarnings("null")
+    private ZclOtaUpgradeServer getOtaServer(ZigBeeNode node) {
+        ZigBeeEndpoint otaEndpoint = null;
+        for (ZigBeeEndpoint endpoint : node.getEndpoints()) {
+            ZclOtaUpgradeServer otaServer = (ZclOtaUpgradeServer) endpoint
+                    .getApplication(ZclOtaUpgradeCluster.CLUSTER_ID);
+            if (otaServer != null) {
+                return otaServer;
+            }
+
+            if (endpoint.getOutputCluster(ZclOtaUpgradeCluster.CLUSTER_ID) != null && otaEndpoint == null) {
+                otaEndpoint = endpoint;
+                break;
+            }
+        }
+
+        if (otaEndpoint == null) {
+            logger.debug("{}: Can't find OTA cluster", nodeIeeeAddress);
+            return null;
+        }
+
+        // Create the OTA server and register it with the endpoint
+        ZclOtaUpgradeServer otaServer = new ZclOtaUpgradeServer();
+        otaEndpoint.addApplication(otaServer);
+
+        return otaServer;
+    }
+
+    @Override
+    public void otaStatusUpdate(ZigBeeOtaServerStatus status, int percent) {
+        logger.debug("{}: OTA transfer status update {}, percent={}", nodeIeeeAddress, status, percent);
+        if (progressCallback != null) {
+            switch (status) {
+                case OTA_WAITING:
+                    // DOWNLOADING
+                    progressCallback.next();
+                    return;
+                case OTA_TRANSFER_IN_PROGRESS:
+                    progressCallback.update(percent);
+                    return;
+                case OTA_TRANSFER_COMPLETE:
+                    // REBOOTING
+                    progressCallback.next();
+                    progressCallback.update(100);
+                    return;
+                case OTA_UPGRADE_COMPLETE:
+                    progressCallback.success();
+                    break;
+                case OTA_UPGRADE_FAILED:
+                    progressCallback.failed("zigbee.firmware.failed");
+                    break;
+                case OTA_CANCELLED:
+                    progressCallback.canceled();
+                    break;
+                default:
+                    return;
+            }
+        }
+
+        // OTA transfer is complete, cancelled or failed
+        firmwareUpdateInProgress = false;
+        otaServer.cancelUpgrade();
+
+        for (int retry = 0; retry < 3; retry++) {
+            Integer fileVersion = otaServer.getCurrentFileVersion();
+            if (fileVersion != null) {
+                updateProperty(Thing.PROPERTY_FIRMWARE_VERSION,
+                        String.format("%s%08X", ZigBeeBindingConstants.FIRMWARE_VERSION_HEX_PREFIX, fileVersion));
+                break;
+            } else {
+                logger.debug("{}: OTA firmware request timeout (retry {})", nodeIeeeAddress, retry);
+            }
+        }
+
+        updateStatus(ThingStatus.ONLINE);
+        progressCallback = null;
+    }
+
+    @Override
+    public ZigBeeOtaFile otaIncomingRequest(QueryNextImageCommand command) {
+        // We simply store the requested firmware version information so that it's available for the firmware provider
+        lastFirmwareVersion = new ZigBeeFirmwareVersion(command.getManufacturerCode(), command.getImageType(),
+                command.getFileVersion());
+
+        // We always return null as we don't want to automatically start the OTA
+        // Instead we should use the OH concept for firmware management which let's the user know there's a
+        // firmware waiting.
+        return null;
+    }
+
+    /**
+     * Gets the ZigBee firmware version from the last request made by the device.
+     *
+     * @return the {@link ZigBeeFirmwareVersion} or null if no request has been received from the device
+     */
+    public ZigBeeFirmwareVersion getRequestedFirmwareVersion() {
+        return lastFirmwareVersion;
+    }
+
     @Override
     public void updateFirmware(Firmware firmware, ProgressCallback progressCallback) {
         if (nodeIeeeAddress == null) {
@@ -947,30 +1082,7 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
             return;
         }
 
-        ZclOtaUpgradeServer otaServer = null;
-        ZigBeeEndpoint otaEndpoint = null;
-        for (ZigBeeEndpoint endpoint : node.getEndpoints()) {
-            otaServer = (ZclOtaUpgradeServer) endpoint.getApplication(ZclOtaUpgradeCluster.CLUSTER_ID);
-            if (otaServer != null) {
-                break;
-            }
-
-            if (endpoint.getOutputCluster(ZclOtaUpgradeCluster.CLUSTER_ID) != null) {
-                otaEndpoint = endpoint;
-                break;
-            }
-        }
-
-        if (otaServer == null && otaEndpoint == null) {
-            logger.debug("{}: Can't find OTA cluster", nodeIeeeAddress);
-            return;
-        }
-
-        if (otaServer == null) {
-            // Create the OTA server and register it with the endpoint
-            otaServer = new ZclOtaUpgradeServer();
-            otaEndpoint.addApplication(otaServer);
-        }
+        ZclOtaUpgradeServer otaServer = getOtaServer(node);
 
         // Set ourselves offline, and prevent going back online
         firmwareUpdateInProgress = true;
@@ -985,55 +1097,7 @@ public class ZigBeeThingHandler extends BaseThingHandler implements ZigBeeNetwor
         // DOWNLOADING
         progressCallback.next();
 
-        final ZclOtaUpgradeServer finalOtaServer = otaServer;
-        otaServer.addListener(new ZigBeeOtaStatusCallback() {
-            @Override
-            public void otaStatusUpdate(ZigBeeOtaServerStatus status, int percent) {
-                logger.debug("{}: OTA transfer status update {}, percent={}", nodeIeeeAddress, status, percent);
-                switch (status) {
-                    case OTA_WAITING:
-                        // DOWNLOADING
-                        progressCallback.next();
-                        return;
-                    case OTA_TRANSFER_IN_PROGRESS:
-                        progressCallback.update(percent);
-                        return;
-                    case OTA_TRANSFER_COMPLETE:
-                        // REBOOTING
-                        progressCallback.next();
-                        progressCallback.update(100);
-                        return;
-                    case OTA_UPGRADE_COMPLETE:
-                        progressCallback.success();
-                        break;
-                    case OTA_UPGRADE_FAILED:
-                        progressCallback.failed("zigbee.firmware.failed");
-                        break;
-                    case OTA_CANCELLED:
-                        progressCallback.canceled();
-                        break;
-                    default:
-                        return;
-                }
-
-                // OTA transfer is complete, cancelled or failed
-                firmwareUpdateInProgress = false;
-                finalOtaServer.cancelUpgrade();
-
-                for (int retry = 0; retry < 3; retry++) {
-                    Integer fileVersion = finalOtaServer.getCurrentFileVersion();
-                    if (fileVersion != null) {
-                        updateProperty(Thing.PROPERTY_FIRMWARE_VERSION, String.format("%s%08X",
-                                ZigBeeBindingConstants.FIRMWARE_VERSION_HEX_PREFIX, fileVersion));
-                        break;
-                    } else {
-                        logger.debug("{}: OTA firmware request timeout (retry {})", node.getIeeeAddress(), retry);
-                    }
-                }
-
-                updateStatus(ThingStatus.ONLINE);
-            }
-        });
+        this.progressCallback = progressCallback;
     }
 
     @Override

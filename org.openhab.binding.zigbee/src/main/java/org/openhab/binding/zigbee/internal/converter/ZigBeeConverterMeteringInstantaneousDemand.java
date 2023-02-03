@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -158,7 +158,7 @@ public class ZigBeeConverterMeteringInstantaneousDemand extends ZigBeeBaseChanne
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.METERING
+        if (attribute.getClusterType() == ZclClusterType.METERING
                 && attribute.getId() == ZclMeteringCluster.ATTR_INSTANTANEOUSDEMAND) {
             double value = (Integer) val;
             BigDecimal valueCalibrated = BigDecimal.valueOf(value * multiplier / divisor);

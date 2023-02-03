@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -157,7 +157,7 @@ public class ZigBeeConverterMeasurementRmsVoltage extends ZigBeeBaseChannelConve
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.ELECTRICAL_MEASUREMENT
+        if (attribute.getClusterType() == ZclClusterType.ELECTRICAL_MEASUREMENT
                 && attribute.getId() == ZclElectricalMeasurementCluster.ATTR_RMSVOLTAGE) {
             Integer value = (Integer) val;
             BigDecimal valueInVolts = BigDecimal.valueOf(value * multiplier / divisor);

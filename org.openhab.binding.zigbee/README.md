@@ -1,6 +1,6 @@
 # ZigBee Binding
 
-The ZigBee binding supports an interface to a wireless ZigBee home automation network and allows ZigBee devices from numerous manufacturers to be used without a system specific gateway.
+The ZigBee binding supports an interface to a wireless ZigBee home automation network and allows ZigBee devices from numerous manufacturers to be used without a system specific gateway. It should be compatible with a broad range of devices that implement and meet the Zigbee standards including lights, alarms, switches, sensors, etc.
 
 ## Supported Things
 
@@ -77,9 +77,9 @@ Once a child is removed from the child table of a router, it will be asked to re
 
 Note that ZigBee compliant devices should rejoin the network seamlessly, however some non-compliant devices may not rejoin which may leave them unusable without a manual rejoin.
 
-**Values:** Timeout time in seconds. The table below lists the options that are shown in PaperUI and the equivalent values that can be set in a configuration file:
+**Values:** Timeout time in seconds. The table below lists the options that are shown in the UI and the equivalent values that can be set in a configuration file:
 
-| Paper UI     | Config file |
+| UI     | Config file |
 | ------------ | ----------- |
 | _5 Minutes_  | `320`       |
 | _30 Minutes_ | `1800`      |
@@ -93,7 +93,7 @@ Note that ZigBee compliant devices should rejoin the network seamlessly, however
 | _4 Weeks_    | `2419200`   |
 | _7 Weeks_    | `4233600`   |
 
-Note that this value should be given as a number in the configuration file, without quotes. Also note that, technically, you are not bound to using the values from the table. But if you use an arbitrary number of seconds, not corresponding to one of the predefined periods, it might not be possible to display the configured value correctly in PaperUI.
+Note that this value should be given as a number in the configuration file, without quotes. Also note that, technically, you are not bound to using the values from the table. But if you use an arbitrary number of seconds, not corresponding to one of the predefined periods, it might not be possible to display the configured value correctly in the UI.
 
 ##### Concentrator Type (zigbee_concentrator)
 
@@ -112,7 +112,7 @@ If supported, the High RAM concentrator should be used.
 
 The binding is able to search the network to get a list of what devices can communicate with other devices. This is a useful diagnostic feature as it allows users to see the links between devices, and the quality of these links. However, this can generate considerable traffic, and some battery devices may not poll their parents often enough to provide these updates, and users may consider that it is better to reduce the period, or disable this feature.
 
-**Value:** the update period in seconds. `0` means "never update". In PaperUI, a drop down list is shown, the options from that list are shown in te table below, with their equivalent values that can be put in a config file.
+**Value:** the update period in seconds. `0` means "never update". In the UI, a drop down list is shown, the options from that list are shown in te table below, with their equivalent values that can be put in a config file.
 
 | UI           | Config file |
 | ------------ | ----------- |
@@ -124,7 +124,7 @@ The binding is able to search the network to get a list of what devices can comm
 | _1 Day_      | `86400`     |
 | _1 Week_     | `604800`    |
 
-Please note that, technically, you are not bound to using the values from the table. But if you use an arbitrary number of seconds, not corresponding to one of the predefined periods, it might not be possible to display the configured value correctly in PaperUI.
+Please note that, technically, you are not bound to using the values from the table. But if you use an arbitrary number of seconds, not corresponding to one of the predefined periods, it might not be possible to display the configured value correctly in the UI.
 
 ##### Network Size (zigbee_networksize)
 
@@ -153,15 +153,17 @@ The following coordinators are known to be supported.
 
 | Name and Link                                                                                                                                         | Coordinator                          | Configuration                                            | Comment                                                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [POPP ZigBee Stick](https://www.popp.eu/zb-stick/) | [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control<br>High RAM |
-| [Bitron Video ZigBee USB Funkstick](https://bv.smabit.eu/index.php/smart-home-produkte/zb-funkstick/)                                                 | [Ember](#ember-ezsp-ncp-coordinator) | 57600bps<br>Software&nbsp;flow&nbsp;control<br>High RAM  |                                                                                                                                                                                                                                                                                                |
-| [Elelabs ELU013/ELR023](https://elelabs.com/shop/)                                                                                                    | [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control<br>High RAM | Both the stick and the hat can be upgraded without additional hardware, firmware available [here](https://github.com/Elelabs/elelabs-zigbee-ezsp-utility).                                                                                                                                     |
-| [MeshConnect EM358 USB Stick](https://www.cortet.com/iot-hardware/cortet-usb-sticks/em358-usb-stick)                                                       | [Ember](#ember-ezsp-ncp-coordinator) |  | Requires specific drivers that may not work on MacOS Monterey                                                                                                                                                                                                                                                                                               |
-| [Nortek Security & Control HUSBZB-1](https://nortekcontrol.com/products/2gig/husbzb-1-gocontrol-quickstick-combo/)                                    | [Ember](#ember-ezsp-ncp-coordinator) | 57600bps<br>Software&nbsp;flow&nbsp;control<br>High RAM  | Stick contains both Z-Wave and ZigBee.                                                                                                                                                                                                                                                         |
-| [Telegesis ETRX357USB ZigBee® USB Stick](https://www.silabs.com/products/wireless/mesh-networking/telegesis-modules-gateways/etrx3-zigbee-usb-sticks) | [Telegesis](#telegesis-etrx3)        |                                                          | Not supported for ZigBee 3.0                                                                                                                                                                                                                                                                                               |
+| [Sonoff Zigbee 3.0 USB Dongle Plus (model “ZBDongle-E”) from ITead](https://itead.cc/product/zigbee-3-0-usb-dongle/)                                                                                                    | [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control<br>High RAM | Based on Silicon Labs EFR32MG21 MCU. EmberZNet Zigbee NCP (coordinator) firmware image builds from ITead available [here](https://github.com/itead/Sonoff_Zigbee_Dongle_Firmware/tree/master/Dongle-E).                                                                                                                                     |
+| [Elelabs Zigbee USB Adapter ELU013](https://elelabs.com/products/elelabs-usb-adapter.html) and [Elelabs Zigbee Raspberry Pi Shield ELR023](https://elelabs.com/products/elelabs-zigbee-shield.html)                                                                                                    | [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control<br>High RAM | Based on Silicon Labs EFR32MG13P MCU. Both the stick and the shield can be upgraded without additional hardware, firmware available [here](https://github.com/Elelabs/elelabs-zigbee-ezsp-utility).                                                                                                                                     |
+| Elelabs Zigbee USB Adapters ELU012 ((EFR32MG1B) and EZBUSBA (EM357) or Elelabs Zigbee Raspberry Pi Shields ELR022 (EFR32MG1B) and EZBPIS (EM357)                                                                                                     | [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control and 57600bps<br>Software&nbsp;flow&nbsp;control respectivly | Based on Silicon Labs EFR32MG1B and EM357 MCUs respectivly. Both the sticks and the shields can be upgraded without additional hardware, firmware available [here](https://github.com/Elelabs/elelabs-zigbee-ezsp-utility).                                                                                                                                     |
+| [POPP ZB-STICK 701554](https://www.popp.eu/zb-stick/) and [POPP ZB-SHIELD 701561](https://www.popp.eu/zb-shield/) (rebranded Elelabs ELU013 and ELR023)| [Ember](#ember-ezsp-ncp-coordinator) | 115200bps<br>Hardware&nbsp;flow&nbsp;control<br>High RAM | Based on Silicon Labs EFR32MG13P MCU. Both the stick and the shield can be upgraded without additional hardware, firmware available [here](https://github.com/Elelabs/elelabs-zigbee-ezsp-utility).                                                                                                                                      |
+| [Bitron Video AV2010/10 Funkstick (also sold as SMaBiT AV2010/10)](https://bv.smabit.eu/index.php/smart-home-produkte/zb-funkstick/)                                           | [Ember](#ember-ezsp-ncp-coordinator) | 57600bps<br>Software&nbsp;flow&nbsp;control<br>High RAM  | Based on Silicon Labs EM3587.                                                                                                                                                                                                                                                         |
+| [CEL Cortet MeshConnect USB Sticks (EM358, ZM357S-USB, ZM3588S-USB models)](https://www.cel.com/product/)                                                       | [Ember](#ember-ezsp-ncp-coordinator) |  | Based on Silicon Labs EM358, EM357, and EM3588 MCUs respectivly. Requires specific drivers that may not work on MacOS Monterey.                                                                                                                                                                                                                                                         |
+| [Nortek GoControl QuickStick Combo Model HUSBZB-1](https://nortekcontrol.com/products/2gig/husbzb-1-gocontrol-quickstick-combo/)                                    | [Ember](#ember-ezsp-ncp-coordinator) | 57600bps<br>Software&nbsp;flow&nbsp;control<br>High RAM  | Based on Silicon Labs EM3581 MCU. Stick contains both Z-Wave and ZigBee.                                                                                                                                                                                                                                                         |
+| [Telegesis ETRX357USB, ETRX357USB+8M, and ETRX357USB-LRS ZigBee USB Stick](https://www.silabs.com/products/wireless/mesh-networking/telegesis-modules-gateways/etrx3-zigbee-usb-sticks) | [Telegesis](#telegesis-etrx3)        |                                                          | Based on Silicon Labs EM357 MCU. Not supported for ZigBee 3.0                                                                                                                                                                                                                                                                                               |
 | [QIVICON ZigBee-Funkstick](https://www.qivicon.com/de/produkte/produktinformationen/zigbee-funkstick/)                                                | [Telegesis](#telegesis-etrx3)        |                                                          | Only working on Linux devices                                                                                                                                                                                                                                                                  |
-| [Digi XStick](https://www.digi.com/products/xbee-rf-solutions/boxed-rf-modems-adapters/xstick)                                                        | [XBee](#digi-xbee-x-stick)           |                                                          |                                                                                                                                                                                                                                                                                                |
-| [Texas Instruments CC2531EMK](http://www.ti.com/tool/cc2531emk)                                                                                       | [CC2531](#cc2531-coordinator)        |                                                          | CC2531 is not recommended for more then 15 devices due to its less powerful MCU. Also needs extra [hardware and Z-Stack Home 1.2 firmware flashed](https://www.zigbee2mqtt.io/guide/adapters/flashing/flashing_the_cc2531.html). CC2530 and CC2538 may work too with Z-Stack Home 1.2 compatible firmware. |
+| [Digi XStick (Digi XBee 3 USB Adapter)](https://www.digi.com/products/xbee-rf-solutions/boxed-rf-modems-adapters/xstick)                                                        | [XBee](#digi-xbee-x-stick)           |                                                          |                                                                                                                                                                                                                                                                                                |
+| [Texas Instruments CC2531EMK](http://www.ti.com/tool/cc2531emk)                                                                                     | [CC2531](#cc2531-coordinator)        |                                                          | CC2530 are not recommended for more then 15 devices due to its less powerful MCU. Also needs extra [hardware and Z-Stack Home 1.2 firmware flashed](https://www.zigbee2mqtt.io/guide/adapters/flashing/flashing_the_cc2531.html). CC2530 and CC2538 may work too with Z-Stack Home 1.2 compatible firmware. |
 
 #### Ember Coordinator
 
@@ -246,7 +248,7 @@ Extract and install the TI Flash Programmer, connect the CC-Debugger trough USB,
 
 ### Devices
 
-The following devices have been tested by openHAB users with the binding. This list is far from exhaustive, and the absence of a device in this list does not mean it will not work - if the device is a standard ZigBee device similar to ones on this list, then it should work. It should be noted that many "new" devices (approximately newer than 2020) will require coordinators that support ZigBee 3.0. If this is not supported, then devices may briefly join the network, and then leave when they find the network does not support the newer security requirements.
+The following devices have been tested by openHAB users with the binding. This list is far from exhaustive, and the absence of a device in this list does not mean it will not work - **if the device is a standard ZigBee device similar to ones on this list, then it should work**. It should be noted that many "new" devices (approximately newer than 2020) will require coordinators that support ZigBee 3.0. If this is not supported, then devices may briefly join the network, and then leave when they find the network does not support the newer security requirements.
 
 | Device                                         | Description                                                  |
 | ---------------------------------------------- | ------------------------------------------------------------ |
@@ -255,25 +257,30 @@ The following devices have been tested by openHAB users with the binding. This l
 | Busch-Jaeger 6735                              | Control Element (1-channel)                                  |
 | Busch-Jaeger 6735/01                           | Control Element (1-channel, battery-operated)                |
 | Busch-Jaeger 6736                              | Control Element (2-channel)                                  |
+| Clipsal Iconic dimmers and switches            | Wiser switches and dimmers by Schneider                      |
 | Eurotronic Spirit Thermostat                   | Radiator Thermostat                                          |
 | GE Bulbs                                       |                                                              |
 | GE Tapt Wall Switch                            | On/Off Switch                                                |
+| GLEDOPTO GL-C-007                              | GLEDOPTO RGBW Led stripe controller                          |
 | Hue Bulbs                                      | Color LED Bulb                                               |
-| Hue Dimmer                                     | Hue Dimmer Switch Remote _[<sup>[2]</sup>](#note2)_          |
+| Hue Dimmer Switch                              | Remote RWL021 / RWL022 _[<sup>[2]</sup>](#note2)_            |
 | Hue Motion Sensor                              | Motion and Luminance sensor                                  |
-| IKEA Fyrtur Blinds                             | Roller blinds                                                |
+| IKEA Fyrtur Blinds                             | Roller blinds. See [forum tutorial](https://community.openhab.org/t/ikea-fyrtur-zigbee-w-direct-control-howto/136735) for further information |
 | IKEA Tradfri Bulbs                             |                                                              |
 | IKEA Tradfri Motion Sensor                     |                                                              |
 | IKEA Tradfri Outlet                            |                                                              |
 | IKEA Tradfri Repeater                          |                                                              |
 | Innr Bulbs                                     | _[<sup>[1]</sup>](#note1)_                                   |
 | Innr SP 120                                    | Smart Plug _[<sup>[1]</sup>](#note1)_                        |
+| LIVARNO Smart Home                             | Lidl Livarno Smart Home Bulbs _[<sup>[4]</sup>](#note4)_     |
 | LEDVANCE/Osram Bulbs                           |                                                              |
 | Lupus Small Zigbee Temperature Sensor 12314    | Lupus-Electronics Temperature and Humidity sensor            |
 | Osram Flex 3P Multicolor                       | Osram Smart+ LED Strip                                       |
 | Osram Motion Sensor                            | Osram Smart+ Motion Sensor _[<sup>[1]</sup>](#note1)_        |
+| Osram Smart+ Plug                              |                                                              |
 | Securifi Peanut Plug                           | Metered Plug                                                 |
 | Shenzhen Ksentry Electronics On Off Controller | Relay                                                        |
+| Schneider Electric dimmers and swtiches        | Switches and dimmers                                         |
 | SMaBiT (Bitron Video) Magnetic contect         | AV2010/21 /21A /21B /21C                                     |
 | SMaBiT (Bitron Video) Motion Sensor            | AV2010/22 /22A /22B                                          |
 | SMaBiT (Bitron Video) Wall-mount relay         | AV2010/18 (10A on/off), /16 (2.5A Dimmer)                    |
@@ -288,21 +295,29 @@ The following devices have been tested by openHAB users with the binding. This l
 | SmartThings Plug                               | Metered Plug                                                 |
 | SmartThings Motion Sensor                      | CentraLite 3325-S Motion and Temperature sensor              |
 | SmartThings Contact Sensor                     | Contact and Temperature sensor                               |
+| SONOFF SNZB-01                                 | Button (On/Off toggle switch) eWeLink WB01                   |
+| SONOFF SNZB-02                                 | Sensor (Temperature, Humidity) eWeLink TH01                  |
+| SONOFF SNZB-03                                 | Sensor (Motion Intrusion, Tamper, Low Battery) eWeLink MS01  |
+| SONOFF SNZB-04                                 | Sensor (Contact Portal 1, Tamper, Low Battery) eWeLink DS01  |
 | Telkonet EcoInsight Thermostat                 | Intelligent HVAC Thermostat                                  |
 | Trust Bulbs                                    | _[<sup>[1]</sup> ](#note1)_                                  |
 | Ubisys modules                                 | D1 Dimmer, S1/S2 Switch modules                              |
 | Xiaomi Aqara Door and Window Sensor            | _[Known issues](#xiaomi-devices)_                            |
 | Xiaomi Aqara Temperature and Humidity Sensor   | _[Known issues](#xiaomi-devices)_                            |
 | Xiaomi Aqara Human Motion Sensor               | _[<sup>[3]</sup>](#note3)_ _[Known issues](#xiaomi-devices)_ |
+| Xiaomi Aqara Wireless Mini Switch              | WXKG11LM                                                     |
 | Xiaomi Aqara Wireless Mini Switch              | _[Known issues](#xiaomi-devices)_                            |
 | Xiaomi Aqara Wired Wall Switch                 | _[Known issues](#xiaomi-devices)_                            |
 | Xiaomi Aqara Wireless Remote Switch            | Double Rocker variant _[Known issues](#xiaomi-devices)_      |
+| Xiaomi Mijia Smart Switch                      | Round Button _[Known issues](#xiaomi-devices)_               |
 
 <a name="note1"></a> _Note 1: Some devices may not work with the Telegesis dongle._
 
-<a name="note2"></a> _Note 2: The Hue Dimmer can be integrated but needs additional rule-configuration to work properly. See below for example._
+<a name="note2"></a> _Note 2: The Hue Dimmer can be integrated but needs additional rule-configuration to work properly. See below for example.
 
 <a name="note3"></a> _Note 3: The illuminance channel value is being reported incorrectly. Transform by 10000\*log10(measuredValue+1) to get the correct illuminance in lux._
+
+<a name="note4"></a> _Note 4: Lidl LIVARNO Smart Home brand seems to be rebranded Tuya devices._
 
 ## Discovery
 
@@ -395,6 +410,8 @@ The following channels are supported -:
 | thermostat_systemmode        | `THERMOSTAT` (0x0201)                    | Number                   |             |
 | thermostat_unoccupiedcooling | `THERMOSTAT` (0x0201)                    | Number                   |             |
 | thermostat_unoccupiedheating | `THERMOSTAT` (0x0201)                    | Number                   |             |
+| thermostat_heatingdemand     | `THERMOSTAT` (0x0201)                    | Number:Dimensionless     |             |
+| thermostat_coolingdemand     | `THERMOSTAT` (0x0201)                    | Number:Dimensionless     |             |
 | warning_device               | `IAS_WD` (0x0502)                        | String                   |             |
 | windowcovering_lift          | `WINDOW_COVERING` (0x0102)               | Rollershutter            |             |
 
@@ -428,7 +445,7 @@ The syntax for the command strings is as in the examples above, where the possib
 | sirenLevel / squawkLevel | `LOW`, `MEDIUM`, `HIGH`, `VERY_HIGH`, any integer value (for devices supporting levels not specified in the ZCL)                                                           |
 | duration                 | A duration specified in the ISO-8601 duration format                                                                                                                       |
 
-Note that it is possible to dynamically add command descriptions for specific warning/squawk types to a `warning_device` channel by configuring the channel configuration property `zigbee_iaswd_commandOptions`, using String parameters of the form `label=>commandString`, where `label` is the label provided to UIs to render, e.g., buttons for the provided command options (as done, e.g., by PaperUI).
+Note that it is possible to dynamically add command descriptions for specific warning/squawk types to a `warning_device` channel by configuring the channel configuration property `zigbee_iaswd_commandOptions`, using String parameters of the form `label=>commandString`, where `label` is the label provided to UIs to render, e.g., buttons for the provided command options.
 Also note that solutions integrating the binding can add implementations of type `WarningTypeCommandDescriptionProvider` to provide warning/squawk types together with command descriptions for all channels of type `warning_device`.
 
 ## Channels triggered event & rules
@@ -464,6 +481,19 @@ In order for a report to be sent to the binding, or to another device, a "bindin
 
 Polling may be used by the binding to request data from the device. Polling is normally only used if reporting doesn't work for some reason. This may happen if the reporting table in a device is full - if the binding detects this, it will increase the polling rate.
 
+
+## Device Firmware Updates
+
+A *Firmware Provider*, backed by the [Koenkk OTA](https://github.com/Koenkk/zigbee-OTA) repository on GitHub can be used to upgrade device firmware. This *Firmware Provider* provides firmware to the openHAB firmware management system. Since there is no information linking firmware to a device, Zigbee devices must ask for a firmware update, and when this happens, the *Firmware Provider* will use the information in this request to check to see if there is firmware available, and if there is it will download this to a local file in the *Userdata* folder. It will also advise the openHAB firmware management system that there is firmware available to upload, and the user can manage this appropriately.
+
+Devices normally request a firmware update at an interval that could be every few minutes, to every few days - depending on the manufacturer. When the provider receives the request from the device, it checks to see if there is a firmware matching the request, and if so it will download the firmware from the net in preparation for the user to approve the upgrade.
+
+Firmware files downloaded from the repository are checked for integrity against the SHA512 hash. an MD5 hash is then generated locally so that the firmware can be checked by the OH core prior to starting the firmware update.
+
+Currently the openHAB main UI doesn't support the firmware management system, so this must be performed using the console.
+
+
+
 ## When things don't appear to be working
 
 When things don't appear to be working as expected you should check the logs to try and find what is happening. Debug logging can be enabled with the following Karaf commands -:
@@ -490,7 +520,7 @@ To list all known nodes, use the `nodes` command. This will list the nodes and e
 
 #### Device Information (Fingerprint)
 
-In some instances a device may not work correctly. This could be because the binding had problems during initialisation, or possibly because the device supports features not implemented in the binding, or possibly the device may implement custom functionality. To understand this, there is a `fingerprint` command. This command will attempt to poll the device to get a list of all the commands and attributes that the device supports and create a concise list. Note that this may not work on all devices if the device doesn't support the functionality discovery commands.
+In some instances a device may not work correctly, or you may wish to see more technical information about the devices' features. This could be because the binding had problems during initialisation, or possibly because the device supports features not implemented in the binding, or possibly the device may implement custom functionality. To understand this, there is a `fingerprint` command. This command will attempt to poll the device to get a list of all the commands and attributes that the device supports and create a concise list. Note that this may not work on all devices if the device doesn't support the functionality required discovery the commands and attributes supported by the device.
 
 #### Binding and Reporting
 
@@ -501,6 +531,71 @@ The binding table for a node can be displayed with the `bindtable` command. It c
 A second part to the binding and reporting system is the reporting. The binding table tells the device where it should send reports, but the actual reports must be configured as well. Many attributes in a ZigBee cluster can be configured to send reports if their state changes, or at a periodical rate if there have been no state updates within a certain time. Analogue values can be configured so that they report if the value changes by a certain amount so that the reports do not flood the system.  Care must be exercised when changing this configuration as it may interfere with the binding operation.
 
 The exact command required to configure reporting can depend on whether the attribute is a binary or analogue type. The console commands `subscribe` and `unsubscribe` allow the user to manipulate the reporting of an attribute, and the `reportcfg` command can be used to display the current configuration.
+
+#### General Console Commands
+
+The following console commands are available in the openHAB console - they should all be preceeded by the `zigbee` command (eg `zigbee join`).
+
+Where an address is required, endpoints can use the format `123/1` (destination/endpoint), or in hexadecimal `0xed1/1`. Group addresses can be subsituted by preceding the address with a `#` - eg `#123` or #0xed1.
+
+| Command      | Description                                                                            |
+| ------------ | -------------------------------------------------------------------------------------- |
+| join         | Enable or disable network join                                                         |
+| leave        | Remove a node from the network                                                         |
+| nodelist     | Lists the known nodes in the network                                                   |
+| node         | Provides detailed information about a node                                             |
+| endpoint     | Provides detailed information about an endpoint                                        |
+| info         | Get basic info about a device                                                          |
+| identify     | Sends the `identify` command to an endpoint                                            |
+| fingerprint  | Get detailed information about a device                                                |
+| read         | Read an attribute                                                                      |
+| write        | Write an attribute                                                                     |
+| bind         | Binds a device to another device                                                       |
+| unbind       | Unbinds a device from another device                                                   |
+| bindtable    | Reads and displays the binding table from a node                                       |
+| attsupported | Check what attributes are supported within a cluster                                   |
+| cmdsupported | Check what commanda are supported within a cluster                                     |
+| subscribe    | Subscribe to attribute reports                                                         |
+| unsubscribe  | Unsubscribe from attribute reports                                                     |
+| reportcfg    | Read the reporting configuration of an attribute                                       |
+| otaupgrade   | Provides information about device Over The Air upgrade server status                   |
+| installkey   | Adds an install key to the dongle                                                      |
+| linkkey      | Sets the link key int the dongle, optionally computing the MMO Hash from the join code |
+| netstart     | Join or Form a network as a router or coordinator                                      |
+| netbackup    | Backup or restores the state of the dongle                                             |
+| discovery    | Gets information on the network discovery tasks                                        |
+| routingtable | Gets the routing table from a node                                                     |
+| neighbours   | Gets the neighbour table from a node                                                   |
+| on           | Turns a device on                                                                      |
+| off          | Turns a device off                                                                     |
+| level        | Sets the level on a level control device                                               |
+| color        | Sets the color on a color control device                                               |
+| covering     | Sets the level on a window covering device                                             |
+| group        | Configures multicast groups                                                            |
+| scene        | Configures scenes                                                                      |
+| factoryreset | Resets a node to factory defaults                                                      |
+
+#### Ember NCP Commands 
+
+The following commands are available if the transport layer is using the Silabs Ember NCP.
+
+| Command          | Description                                                                   |
+| ---------------- | ----------------------------------------------------------------------------- |
+| ncpchildren      | Gets the NCP child information                                                |
+| ncpaddrtable     | Manages the NCP address table                                                 |
+| ncpconfig        | Read or write an NCP configuration value                                      |
+| ncpscan          | Performs a scan, looking for other networks, or energy levels on each channel |
+| ncpcounters      | Gets the NCP debug counters                                                   |
+| ncpstate         | Gets the NCP network state and optionally brings the network up or down       |
+| ncpvalue         | Read or write an NCP memory value                                             |
+| ncpversion       | Gets the NCP firmware version                                                 |
+| ncpsecuritystate | Gets the current NCP security state and configuration                         |
+| ncptransientkey  | Adds a transient link key to the NCP                                          |
+| ncpmmohash       | Uses the NCP to perform the MMO hash                                          |
+| ncprouting       | Prints the NCP routing tables and information                                 |
+| ncpmcast         | Read and configure NCP multicast group table                                  |
+| ncppolicy        | REad and write NCP policies                                                   |
+| ncptoken         | Reads and writes manufacturing tokens in the NCP                              |
 
 ## Known issues
 

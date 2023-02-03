@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -35,7 +35,6 @@ import com.zsmartsystems.zigbee.ZigBeeEndpoint;
 import com.zsmartsystems.zigbee.zcl.ZclAttribute;
 import com.zsmartsystems.zigbee.zcl.ZclAttributeListener;
 import com.zsmartsystems.zigbee.zcl.clusters.ZclElectricalMeasurementCluster;
-import com.zsmartsystems.zigbee.zcl.clusters.ZclRelativeHumidityMeasurementCluster;
 import com.zsmartsystems.zigbee.zcl.protocol.ZclClusterType;
 
 /**
@@ -79,7 +78,7 @@ public class ZigBeeConverterMeasurementPower extends ZigBeeBaseChannelConverter 
                 // Configure reporting
                 ZclAttribute attribute = serverClusterMeasurement
                         .getAttribute(ZclElectricalMeasurementCluster.ATTR_ACTIVEPOWER);
-                CommandResult reportingResponse = attribute.setReporting(3, REPORTING_PERIOD_DEFAULT_MAX, 1).get();
+                CommandResult reportingResponse = attribute.setReporting(3, REPORTING_PERIOD_DEFAULT_MAX, 1L).get();
                 handleReportingResponse(reportingResponse, POLLING_PERIOD_HIGH, REPORTING_PERIOD_DEFAULT_MAX);
             } else {
                 pollingPeriod = POLLING_PERIOD_HIGH;
@@ -102,7 +101,7 @@ public class ZigBeeConverterMeasurementPower extends ZigBeeBaseChannelConverter 
             return false;
         }
 
-        attribute = clusterMeasurement.getAttribute(ZclRelativeHumidityMeasurementCluster.ATTR_MEASUREDVALUE);
+        attribute = clusterMeasurement.getAttribute(ZclElectricalMeasurementCluster.ATTR_ACTIVEPOWER);
         if (attribute == null) {
             logger.error("{}: Error opening device measured value attribute", endpoint.getIeeeAddress());
             return false;
@@ -155,7 +154,7 @@ public class ZigBeeConverterMeasurementPower extends ZigBeeBaseChannelConverter 
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.ELECTRICAL_MEASUREMENT
+        if (attribute.getClusterType() == ZclClusterType.ELECTRICAL_MEASUREMENT
                 && attribute.getId() == ZclElectricalMeasurementCluster.ATTR_ACTIVEPOWER) {
             Integer value = (Integer) val;
             BigDecimal valueInWatt = BigDecimal.valueOf(value * multiplier / divisor);

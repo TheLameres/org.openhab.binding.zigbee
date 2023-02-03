@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.openhab.binding.zigbee.ZigBeeBindingConstants;
@@ -32,6 +33,7 @@ import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.unit.ImperialUnits;
 import org.openhab.core.library.unit.SIUnits;
+import org.openhab.core.library.unit.Units;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
@@ -428,6 +430,16 @@ public abstract class ZigBeeBaseChannelConverter {
     }
 
     /**
+     * Converts an 0-100 numeric value into a Percentage {@link QuantityType}.
+     *
+     * @param value the integer value to convert
+     * @return the {@link QuantityType}
+     */
+    protected QuantityType valueToPercentDimensionless(Number value) {
+        return new QuantityType<>(value, Units.PERCENT);
+    }
+
+    /**
      * Gets a {@link String} of the device type for the {@link ZigBeeEndpoint} to be used in device labels.
      *
      * @param endpoint the {@link ZigBeeEndpoint}
@@ -519,8 +531,29 @@ public abstract class ZigBeeBaseChannelConverter {
         if (future == null) {
             return;
         }
-
         monitorCommandResponse(command, Collections.singletonList(future));
+    }
+
+    /**
+     * Monitors the command response.
+     * <ul>
+     * <li>If the command fails (timeout), then we set the thing OFFLINE.
+     * <li>If the command succeeds, we wait for an attribute report to update the state
+     * <li>If there is no attribute report received, then we set the state to the original command (if applicable)
+     * </ul>
+     * <p>
+     * Note that this is called from a separate thread created in the ThingHandler, so we can safely block here.
+     *
+     * @param command the {@link Command} that was sent from the framework
+     * @param future the response from the sendCommand method when sending a command (may be null)
+     * @param completionFunction the expression to be called on successful completion
+     */
+    protected void monitorCommandResponse(Command command, final Future<CommandResult> future,
+            Consumer<Command> completionFunction) {
+        if (future == null) {
+            return;
+        }
+        monitorCommandResponse(command, Collections.singletonList(future), completionFunction);
     }
 
     /**
@@ -537,9 +570,27 @@ public abstract class ZigBeeBaseChannelConverter {
      * @param futures the list of futures to wait for for the ZCL commands being sent to the device
      */
     protected void monitorCommandResponse(Command command, List<Future<CommandResult>> futures) {
-        if (futures == null) {
-            return;
-        }
+        monitorCommandResponse(command, futures, cmd -> {
+            updateChannelState((State) cmd);
+        });
+    }
+
+    /**
+     * Monitors the command response.
+     * <ul>
+     * <li>If the command fails (timeout), then we set the thing OFFLINE.
+     * <li>If the command succeeds, we wait for an attribute report to update the state
+     * <li>If there is no attribute report received, then we set the state to the original command (if applicable)
+     * </ul>
+     * <p>
+     * Note that this is called from a separate thread created in the ThingHandler, so we can safely block here.
+     *
+     * @param command the OH command that is being sent
+     * @param futures the list of futures to wait for for the ZCL commands being sent to the device
+     * @param completionFunction the expression to be called on successful completion
+     */
+    protected void monitorCommandResponse(Command command, List<Future<CommandResult>> futures,
+            Consumer<Command> completionFunction) {
         try {
             logger.debug("{}: Channel {} waiting for response to {}", endpoint.getIeeeAddress(), channelUID, command);
             for (Future<CommandResult> future : futures) {
@@ -566,7 +617,7 @@ public abstract class ZigBeeBaseChannelConverter {
             // Treat a successful response as confirmation the device is in the commanded state
             // This might not be 100% correct, but if the device doesn't send the report, then things can get messy, so
             // this is a good compromise.
-            updateChannelState((State) command);
+            completionFunction.accept(command);
 
             thing.alive();
         } catch (InterruptedException | ExecutionException e) {

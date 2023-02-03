@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -72,7 +72,7 @@ public class ZigBeeConverterRelativeHumidity extends ZigBeeBaseChannelConverter 
                 ZclAttribute attribute = serverCluster
                         .getAttribute(ZclRelativeHumidityMeasurementCluster.ATTR_MEASUREDVALUE);
                 CommandResult reportingResponse = attribute
-                        .setReporting(REPORTING_PERIOD_DEFAULT_MIN, REPORTING_PERIOD_DEFAULT_MAX, 0.1).get();
+                        .setReporting(REPORTING_PERIOD_DEFAULT_MIN, REPORTING_PERIOD_DEFAULT_MAX, 50).get();
                 handleReportingResponse(reportingResponse, POLLING_PERIOD_DEFAULT, REPORTING_PERIOD_DEFAULT_MAX);
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -132,7 +132,7 @@ public class ZigBeeConverterRelativeHumidity extends ZigBeeBaseChannelConverter 
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.RELATIVE_HUMIDITY_MEASUREMENT
+        if (attribute.getClusterType() == ZclClusterType.RELATIVE_HUMIDITY_MEASUREMENT
                 && attribute.getId() == ZclRelativeHumidityMeasurementCluster.ATTR_MEASUREDVALUE) {
             Integer value = (Integer) val;
             updateChannelState(new DecimalType(BigDecimal.valueOf(value, 2)));

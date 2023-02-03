@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -398,8 +398,6 @@ public abstract class ZigBeeCoordinatorHandler extends BaseBridgeHandler
      */
     protected void startZigBee(ZigBeeTransportTransmit zigbeeTransport, TransportConfig transportConfig,
             Class<?> serializerClass, Class<?> deserializerClass) {
-        updateStatus(ThingStatus.UNKNOWN);
-
         this.zigbeeTransport = zigbeeTransport;
         this.transportConfig = transportConfig;
         this.serializerClass = serializerClass;
@@ -470,7 +468,7 @@ public abstract class ZigBeeCoordinatorHandler extends BaseBridgeHandler
 
         // Add the extensions to the network
         ZigBeeDiscoveryExtension discoveryExtension = new ZigBeeDiscoveryExtension();
-        discoveryExtension.setUpdatePeriod(meshUpdatePeriod);
+        discoveryExtension.setUpdateMeshPeriod(meshUpdatePeriod);
         networkManager.addExtension(discoveryExtension);
 
         networkManager.addExtension(new ZigBeeIasCieExtension());
@@ -664,6 +662,14 @@ public abstract class ZigBeeCoordinatorHandler extends BaseBridgeHandler
                     reinitialise = true;
                     break;
 
+                case ZigBeeBindingConstants.CONFIGURATION_MESHUPDATEPERIOD:
+                    ZigBeeDiscoveryExtension extension = (ZigBeeDiscoveryExtension) networkManager
+                            .getExtension(ZigBeeDiscoveryExtension.class);
+                    if (extension != null) {
+                        extension.setUpdateMeshPeriod(((BigDecimal) configurationParameter.getValue()).intValue());
+                    }
+                    break;
+
                 case ZigBeeBindingConstants.THING_PROPERTY_INSTALLCODE:
                     addInstallCode((String) configurationParameter.getValue());
                     // Don't save this - it's a transient key
@@ -795,7 +801,6 @@ public abstract class ZigBeeCoordinatorHandler extends BaseBridgeHandler
 
     @Override
     public void nodeAdded(@Nullable ZigBeeNode node) {
-        nodeUpdated(node);
     }
 
     @Override

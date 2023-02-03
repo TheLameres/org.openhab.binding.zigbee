@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -157,7 +157,7 @@ public class ZigBeeConverterMeteringSummationDelivered extends ZigBeeBaseChannel
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.METERING
+        if (attribute.getClusterType() == ZclClusterType.METERING
                 && attribute.getId() == ZclMeteringCluster.ATTR_CURRENTSUMMATIONDELIVERED) {
             double value = ((Long) val).intValue();
             BigDecimal valueCalibrated = BigDecimal.valueOf(value * multiplier / divisor);
@@ -165,7 +165,7 @@ public class ZigBeeConverterMeteringSummationDelivered extends ZigBeeBaseChannel
         }
     }
 
-    private void determineDivisorAndMultiplier(ZclMeteringCluster serverClusterMeasurement) {
+    private void determineDivisorAndMultiplier(ZclMeteringCluster clusterMetering) {
         ZclAttribute divisorAttribute = clusterMetering.getAttribute(ZclMeteringCluster.ATTR_DIVISOR);
         ZclAttribute multiplierAttribute = clusterMetering.getAttribute(ZclMeteringCluster.ATTR_MULTIPLIER);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -147,8 +147,6 @@ public class ZigBeeConverterSwitchOnoff extends ZigBeeBaseChannelConverter
         }
 
         if (clusterOnOffServer != null) {
-            // Add the listener
-            clusterOnOffServer.addAttributeListener(this);
             configOnOff = new ZclOnOffSwitchConfig();
             configOnOff.initialize(clusterOnOffServer);
             configReporting = new ZclReportingConfig(channel);
@@ -278,7 +276,7 @@ public class ZigBeeConverterSwitchOnoff extends ZigBeeBaseChannelConverter
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.ON_OFF && attribute.getId() == ZclOnOffCluster.ATTR_ONOFF) {
+        if (attribute.getClusterType() == ZclClusterType.ON_OFF && attribute.getId() == ZclOnOffCluster.ATTR_ONOFF) {
             Boolean value = (Boolean) val;
             if (value != null && value) {
                 updateChannelState(OnOffType.ON);

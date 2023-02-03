@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2021 Contributors to the openHAB project
+ * Copyright (c) 2010-2023 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -78,7 +78,7 @@ public class ZigBeeConverterMeteringSummationReceived extends ZigBeeBaseChannelC
                 ZclAttribute attribute = serverClusterMeasurement
                         .getAttribute(ZclMeteringCluster.ATTR_CURRENTSUMMATIONRECEIVED);
                 // Configure reporting - no faster than once per second - no slower than 2 hours.
-                CommandResult reportingResponse = attribute.setReporting(3, REPORTING_PERIOD_DEFAULT_MAX, 1).get();
+                CommandResult reportingResponse = attribute.setReporting(3, REPORTING_PERIOD_DEFAULT_MAX, 1L).get();
                 handleReportingResponse(reportingResponse, POLLING_PERIOD_HIGH, REPORTING_PERIOD_DEFAULT_MAX);
             } else {
                 pollingPeriod = POLLING_PERIOD_HIGH;
@@ -157,7 +157,7 @@ public class ZigBeeConverterMeteringSummationReceived extends ZigBeeBaseChannelC
     @Override
     public void attributeUpdated(ZclAttribute attribute, Object val) {
         logger.debug("{}: ZigBee attribute reports {}", endpoint.getIeeeAddress(), attribute);
-        if (attribute.getCluster() == ZclClusterType.METERING
+        if (attribute.getClusterType() == ZclClusterType.METERING
                 && attribute.getId() == ZclMeteringCluster.ATTR_CURRENTSUMMATIONRECEIVED) {
             double value = ((Long) val).intValue();
             BigDecimal valueCalibrated = BigDecimal.valueOf(value * multiplier / divisor);
